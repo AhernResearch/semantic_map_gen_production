@@ -1,0 +1,133 @@
+[
+  {
+    "root": "models",
+    "path": "lseg/demo_e200.ckpt",
+    "stages": [
+      "vlmaps"
+    ],
+    "source": "https://drive.google.com/uc?id=1ayk6NXURI_vIPlym16f_RG3ffxBWHxvb",
+    "bytes": 3095944292,
+    "sha256": "f21aeb5532f53a5109d453d7d0d10320701ea11ece9a002291f84f95bda73af4"
+  },
+  {
+    "root": "models",
+    "path": "sam2/sam2.1_hiera_tiny.pt",
+    "stages": [
+      "hmsg"
+    ],
+    "source": "https://dl.fbaipublicfiles.com/segment_anything_2/092824/sam2.1_hiera_tiny.pt",
+    "bytes": 156008466,
+    "sha256": "7402e0d864fa82708a20fbd15bc84245c2f26dff0eb43a4b5b93452deb34be69"
+  },
+  {
+    "root": "models",
+    "path": "conceptgraphs/yolov8l-world.pt",
+    "stages": [
+      "cg_detect"
+    ],
+    "source": "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8l-world.pt",
+    "bytes": 95667042,
+    "sha256": "8bdfaef999116760247d6fb0b0f8fca064b43e94598b3d4a807ebae9bcf0cdd5"
+  },
+  {
+    "root": "models",
+    "path": "conceptgraphs/mobile_sam.pt",
+    "stages": [
+      "cg_detect"
+    ],
+    "source": "https://github.com/ultralytics/assets/releases/download/v8.3.0/mobile_sam.pt",
+    "bytes": 40728226,
+    "sha256": "6dbb90523a35330fedd7f1d3dfc66f995213d81b29a5ca8108dbcdd4e37d6c2f"
+  },
+  {
+    "root": "models",
+    "path": "clip/ViT-B-32.pt",
+    "stages": [
+      "vlmaps"
+    ],
+    "source": "https://openaipublic.azureedge.net/clip/models/40d365715913c9da98579312b702a82c18be219cc2a73407c4526f58eba950af/ViT-B-32.pt",
+    "bytes": 353976522,
+    "sha256": "40d365715913c9da98579312b702a82c18be219cc2a73407c4526f58eba950af"
+  },
+  {
+    "root": "models",
+    "path": "clip/ViT-H-14.safetensors",
+    "stages": [
+      "hmsg",
+      "cg_detect"
+    ],
+    "source": "https://huggingface.co/laion/CLIP-ViT-H-14-laion2B-s32B-b79K/resolve/1c2b8495b28150b8a4922ee1c8edee224c284c0c/open_clip_model.safetensors",
+    "bytes": 3944517836,
+    "sha256": "0084e75319a50ad85ef45377bad5bc38f2f58824459eb690048d51c9f8863be5"
+  },
+  {
+    "root": "models",
+    "path": "DA3METRIC-LARGE/config.json",
+    "stages": [
+      "depth"
+    ],
+    "source": "https://huggingface.co/depth-anything/DA3METRIC-LARGE/resolve/4010e39f3634a45bc60553321fb49fb760bd594e/config.json",
+    "bytes": 847,
+    "sha256": "a336f3e76fe375aaae17a9aed9130c9f2aa061535d317ec57dcb2f1f02e1dd53",
+    "revision": "4010e39f3634a45bc60553321fb49fb760bd594e"
+  },
+  {
+    "root": "models",
+    "path": "DA3METRIC-LARGE/model.safetensors",
+    "stages": [
+      "depth"
+    ],
+    "source": "https://huggingface.co/depth-anything/DA3METRIC-LARGE/resolve/4010e39f3634a45bc60553321fb49fb760bd594e/model.safetensors",
+    "bytes": 1336734448,
+    "sha256": "bbea5b0b3ee389849cffa7ddae89de064a90abd2b055fc5aa99aac68db324776",
+    "revision": "4010e39f3634a45bc60553321fb49fb760bd594e"
+  },
+  {
+    "root": "open_clip",
+    "path": "models--timm--vit_base_patch32_clip_224.openai/snapshots/a6f597a30f7b82c51704746581f9a4e41421e878/open_clip_model.safetensors",
+    "stages": [
+      "features"
+    ],
+    "source": "https://huggingface.co/timm/vit_base_patch32_clip_224.openai/resolve/a6f597a30f7b82c51704746581f9a4e41421e878/open_clip_model.safetensors",
+    "bytes": 605143284,
+    "sha256": "e6d1bd7789aa45192b3bf90570a789b478bae1b74ebcce7eddd908e83a2b7c31",
+    "revision": "a6f597a30f7b82c51704746581f9a4e41421e878"
+  },
+  {
+    "root": "huggingface",
+    "path": "models--laion--CLIP-ViT-H-14-laion2B-s32B-b79K/snapshots/1c2b8495b28150b8a4922ee1c8edee224c284c0c/open_clip_config.json",
+    "stages": [
+      "hmsg",
+      "cg_detect"
+    ],
+    "source": "https://huggingface.co/laion/CLIP-ViT-H-14-laion2B-s32B-b79K/resolve/1c2b8495b28150b8a4922ee1c8edee224c284c0c/open_clip_config.json",
+    "bytes": 637,
+    "sha256": "42736e39d52321d5cb6a6c21250669f942411f4732a7eb9011f83de7d781c1c5",
+    "revision": "1c2b8495b28150b8a4922ee1c8edee224c284c0c",
+    "inline_text": "{\n    \"model_cfg\": {\n        \"embed_dim\": 1024,\n        \"vision_cfg\": {\n            \"image_size\": 224,\n            \"layers\": 32,\n            \"width\": 1280,\n            \"head_width\": 80,\n            \"patch_size\": 14\n        },\n        \"text_cfg\": {\n            \"context_length\": 77,\n            \"vocab_size\": 49408,\n            \"width\": 1024,\n            \"heads\": 16,\n            \"layers\": 24\n        }\n    },\n    \"preprocess_cfg\": {\n        \"mean\": [\n            0.48145466,\n            0.4578275,\n            0.40821073\n        ],\n        \"std\": [\n            0.26862954,\n            0.26130258,\n            0.27577711\n        ]\n    }\n}"
+  },
+  {
+    "root": "huggingface",
+    "path": "models--laion--CLIP-ViT-H-14-laion2B-s32B-b79K/snapshots/1c2b8495b28150b8a4922ee1c8edee224c284c0c/open_clip_model.safetensors",
+    "stages": [
+      "hmsg",
+      "cg_detect"
+    ],
+    "source": "https://huggingface.co/laion/CLIP-ViT-H-14-laion2B-s32B-b79K/resolve/1c2b8495b28150b8a4922ee1c8edee224c284c0c/open_clip_model.safetensors",
+    "bytes": 3944517836,
+    "sha256": "0084e75319a50ad85ef45377bad5bc38f2f58824459eb690048d51c9f8863be5",
+    "revision": "1c2b8495b28150b8a4922ee1c8edee224c284c0c",
+    "model_path": "clip/ViT-H-14.safetensors"
+  },
+  {
+    "root": "huggingface",
+    "path": "models--timm--vit_large_patch16_384.augreg_in21k_ft_in1k/snapshots/1a0edc93ef27935b955ce67a344087b140f85d47/model.safetensors",
+    "stages": [
+      "vlmaps"
+    ],
+    "source": "https://huggingface.co/timm/vit_large_patch16_384.augreg_in21k_ft_in1k/resolve/1a0edc93ef27935b955ce67a344087b140f85d47/model.safetensors",
+    "bytes": 1218891162,
+    "sha256": "d8d599fa157f89e4cca5794645d8bddfa7a2e175d82845de0badac64de2ab355",
+    "revision": "1a0edc93ef27935b955ce67a344087b140f85d47"
+  }
+]

@@ -1,0 +1,28 @@
+# Reused installed runtimes/models. Dataset, scene and workspace come from CLI.
+scene_id: FROM_CLI
+workspace: FROM_CLI
+dataset:
+  directory: FROM_CLI
+  image_max_width: 960
+sampling:
+  camera_stride: 15
+  lidar_stride: 4
+  lidar_pairing_stride: 1 # Pair to all scan timestamps; map stride remains independent.
+  max_samples: 0
+depth:
+  process_resolution: 518
+  fit_seed: 53
+hmsg:
+  stride: 5
+  downscale_res: 1
+  camera_height: 0.65 # Engineering approximation; not copied camera calibration.
+conceptgraphs:
+  stride: 4
+  association_mode: guarded
+  sameframe_min_iou: 0.5 # Co-observed boxes below this cannot be one foreground instance.
+  min_spatial_overlap: 0.01 # Reject appearance-only links without native geometry support.
+  min_unique_frames: 2 # Duplicate detections in one image are not two independent views.
+  classes: [electrical cabinet, fire extinguisher, traffic cone, cardboard box, door, window, railing, stairs, chair, table, person, robot, trash can]
+vlmaps:
+  stride: 4
+  cell_size: 0.1

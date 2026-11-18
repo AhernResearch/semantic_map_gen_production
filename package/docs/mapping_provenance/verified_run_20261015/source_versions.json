@@ -1,0 +1,43 @@
+{
+  "HMSG": {
+    "source": "/path/to/original-home/incoming/robot_mapping_20261015/vendor/HoloAgent",
+    "remote": "https://github.com/HorizonRobotics/HoloAgent.git",
+    "commit": "ef14d3152ca6246d8ae64920694c6c74581d246c",
+    "patch": "HMSG.patch"
+  },
+  "ConceptGraphs": {
+    "source": "/path/to/original-home/incoming/robot_mapping_20261015/vendor/concept-graphs",
+    "remote": "https://github.com/concept-graphs/concept-graphs.git",
+    "commit": "93277a02bd89171f8121e84203121cf7af9ebb5d",
+    "patch": "ConceptGraphs.patch"
+  },
+  "VLMaps": {
+    "source": "/path/to/original-home/incoming/robot_mapping_20261015/vendor/vlmaps",
+    "remote": "https://github.com/vlmaps/vlmaps.git",
+    "commit": "58060f97239074338ab419a2090d43fa752d724d",
+    "patch": "VLMaps.patch"
+  },
+  "patch_reasons": {
+    "HMSG": [
+      "Real intrinsics instead of fixed simulated 90deg camera; sorted frameId image lookup.",
+      "DBSCAN radius compatible with 5cm voxels.",
+      "Configurable camera height .65m inferred approximately from current map, not an independently surveyed value.",
+      "Empty pose arrays yield no trajectory free space.",
+      "View-to-room identifiers use actual room IDs to retain topology.",
+      "Git-LFS placeholder label features removed and recomputed locally."
+    ],
+    "ConceptGraphs": [
+      "Remove unused old GSA imports from YOLO-world detector.",
+      "Preserve shared world poses with relative_pose=false.",
+      "Exact PyTorch3D box-overlap algorithm on CPU, output returned to original device.",
+      "Empty detections produce empty records rather than failing."
+    ],
+    "VLMaps": [
+      "Pixel-aligned LSeg features use scaled real camera intrinsics.",
+      "Consistent .1-10m depth range in extent and fusion loops; all three grid bounds checked.",
+      "Initialize voxel feature mean directly; distance weight stored separately.",
+      "Clamp distance weights at 1e-8 to prevent underflow/zero division.",
+      "Seed input depth-point sampling for repeatability."
+    ]
+  }
+}

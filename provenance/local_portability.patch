@@ -1,0 +1,150 @@
+--- package/.venv-maps/pyvenv.cfg.upstream
++++ package/.venv-maps/pyvenv.cfg
+@@ -1,3 +1,3 @@
+-home = /path/to/original-home/.local/share/mamba/envs/whichground/bin
++home = /path/to/original-home/lx_workspace/semantic_map_gen/runtime/python/bin
+ include-system-site-packages = true
+ version = 3.10.22
+--- package/.venv-maps/lib/python3.10/site-packages/easy-install.pth.upstream
++++ package/.venv-maps/lib/python3.10/site-packages/easy-install.pth
+@@ -1,3 +1,3 @@
+-/path/to/original-home/incoming/whichground_clean/code/third_party/segment-anything
+-/path/to/original-home/incoming/whichground_clean/code/third_party/CLIP
+-/path/to/original-home/incoming/whichground_clean/code/third_party/MobileSAM
++/path/to/original-home/lx_workspace/semantic_map_gen/package/code/third_party/segment-anything
++/path/to/original-home/lx_workspace/semantic_map_gen/package/code/third_party/CLIP
++/path/to/original-home/lx_workspace/semantic_map_gen/package/code/third_party/MobileSAM
+--- package/.venv-maps/lib/python3.10/site-packages/__editable___sam_2_1_0_finder.py.upstream
++++ package/.venv-maps/lib/python3.10/site-packages/__editable___sam_2_1_0_finder.py
+@@ -6,7 +6,7 @@
+ from itertools import chain
+ from pathlib import Path
+ 
+-MAPPING: dict[str, str] = {'sam2': '/path/to/original-home/incoming/whichground_clean/code/third_party/sam2/sam2', 'training': '/path/to/original-home/incoming/whichground_clean/code/third_party/sam2/training'}
++MAPPING: dict[str, str] = {'sam2': '/path/to/original-home/lx_workspace/semantic_map_gen/package/code/third_party/sam2/sam2', 'training': '/path/to/original-home/lx_workspace/semantic_map_gen/package/code/third_party/sam2/training'}
+ NAMESPACES: dict[str, list[str]] = {}
+ PATH_PLACEHOLDER = '__editable__.sam_2-1.0.finder' + ".__path_hook__"
+ 
+--- package/.venv-da3/pyvenv.cfg.upstream
++++ package/.venv-da3/pyvenv.cfg
+@@ -1,3 +1,3 @@
+-home = /path/to/original-home/.local/share/mamba/envs/whichground/bin
++home = /path/to/original-home/lx_workspace/semantic_map_gen/runtime/python/bin
+ include-system-site-packages = true
+ version = 3.10.22
+--- package/code/robot_mapping/configs/new_recording_defaults.yaml.upstream
++++ package/code/robot_mapping/configs/new_recording_defaults.yaml
+@@ -10,7 +10,7 @@
+   lidar_pairing_stride: 1 # Pair to all scan timestamps; map stride remains independent.
+   max_samples: 0
+ depth:
+-  model: ~/.cache/whichground_models/DA3METRIC-LARGE
++  model: /path/to/original-home/lx_workspace/semantic_map_gen/package/data/models/semantic_mapping/DA3METRIC-LARGE
+   process_resolution: 518
+   fit_seed: 53
+ hmsg:
+--- package/code/robot_mapping/run_config.py.upstream
++++ package/code/robot_mapping/run_config.py
+@@ -36,7 +36,7 @@
+ if len(set(TOPICS.values())) != 3:
+     raise ValueError('image, lidar and odom must use distinct topics')
+ DA3_MODEL = path_value(CONFIG.get('depth', {}).get('model', '~/.cache/whichground_models/DA3METRIC-LARGE'))
+-CLIP_CACHE = Path.home() / '.cache/whichground_models/open_clip'
++CLIP_CACHE = PACKAGE_ROOT.parent / 'cache/open_clip'
+ CAMERA_STRIDE = int(CONFIG.get('sampling', {}).get('camera_stride', 15))
+ LIDAR_STRIDE = int(CONFIG.get('sampling', {}).get('lidar_stride', 4))
+ MAX_SAMPLES = int(CONFIG.get('sampling', {}).get('max_samples', 0))
+--- package/code/robot_mapping/build_supplied_semantics.py.upstream
++++ package/code/robot_mapping/build_supplied_semantics.py
+@@ -10,7 +10,7 @@
+ ROOT=rc.WORKSPACE;DATA=ROOT/'supplied_dataset';OUT=ROOT/'semantic_keyframes';OUT.mkdir(exist_ok=True)
+ rows=json.loads((DATA/'camera_samples.json').read_text());poses=np.load(DATA/'camera_poses.npz')['poses']
+ labels=['door','electrical cabinet','fire extinguisher','traffic cone','cardboard box','stairs','person','chair','railing','window','corridor','robot','bed']
+-model,_,preprocess=open_clip.create_model_and_transforms('ViT-B-32-quickgelu',pretrained='openai',device='cuda',cache_dir=str(Path.home()/'.cache/whichground_models/open_clip'));model.eval();features=[]
++model,_,preprocess=open_clip.create_model_and_transforms('ViT-B-32-quickgelu',pretrained='openai',device='cuda',cache_dir=str(rc.CLIP_CACHE));model.eval();features=[]
+ with torch.inference_mode():
+     text=model.encode_text(open_clip.get_tokenizer('ViT-B-32-quickgelu')([f'a photo of a {x}' for x in labels]).to('cuda')).float();text=torch.nn.functional.normalize(text,dim=-1).cpu().numpy()
+     for start in range(0,len(rows),24):
+--- package/code/third_party/CLIP/clip/clip.py.upstream
++++ package/code/third_party/CLIP/clip/clip.py
+@@ -117,7 +117,7 @@
+         A torchvision transform that converts a PIL image into a tensor that the returned model can take as its input
+     """
+     if name in _MODELS:
+-        model_path = _download(_MODELS[name], download_root or os.path.expanduser("~/.cache/clip"))
++        model_path = _download(_MODELS[name], download_root or os.environ.get("SEMANTIC_GEN_CLIP_ROOT") or os.path.expanduser("~/.cache/clip"))
+     elif os.path.isfile(name):
+         model_path = name
+     else:
+--- portal/runner_snapshot/build_maps.py.upstream
++++ portal/runner_snapshot/build_maps.py
+@@ -18,8 +18,8 @@
+ import zipfile
+ 
+ TOOL_ROOT=Path(__file__).resolve().parent
+-DEFAULT_PACKAGE=Path('/path/to/original-home/incoming/whichground_clean')
+-DEVICE_CALIBRATION=Path('/path/to/original-home/incoming/robot_mapping_20261020_clean/calibration/mapping_recording_calibration.txt')
++DEFAULT_PACKAGE=Path('/path/to/original-home/lx_workspace/semantic_map_gen/package')
++DEVICE_CALIBRATION=Path('/path/to/original-home/lx_workspace/semantic_map_gen/inputs/mapping_recording_calibration.txt')
+ MCAP_MAGIC=b'\x89MCAP0\r\n'
+ 
+ def now():return dt.datetime.now(dt.timezone(dt.timedelta(hours=8))).isoformat()
+@@ -213,10 +213,10 @@
+         except BlockingIOError:raise ValueError('已有建图任务占用此用户的GPU，请等待当前任务完成再开始')
+         lock.seek(0);lock.truncate();lock.write(json.dumps({'pid':os.getpid(),'workspace':str(workspace),'started_at':now()}));lock.flush()
+         environment=dict(os.environ,PYTHONDONTWRITEBYTECODE='1',WANDB_MODE='disabled',PYTHONUNBUFFERED='1')
+-        command=[str(python),str(code/'new_run_workflow.py'),'--config',str(config),'--mapping-only','--pause-local-inference']
++        command=[str(python),str(code/'new_run_workflow.py'),'--config',str(config),'--mapping-only']
+         if args.resume:command.append('--resume')
+         status.update(stage='native_three_map_pipeline',command=command,started_at=now(),native_invocation_started_at=now());status.pop('stage_log',None);write(workspace/'RUN_STATUS.json',status)
+-        print('开始原生三图。建图期间释放本机文字/语音模型显存，浏览网站继续可用；流程结束会恢复。',flush=True)
++        print('开始本地原生三图；复用已核对的模型与运行环境。',flush=True)
+         native_started=time.perf_counter();exit_code=run_command(command,environment);timing['native_pipeline_wall_s']=time.perf_counter()-native_started
+         label_report=None
+         if exit_code==0 and status.get('label_yaml'):
+--- portal/runner_snapshot/label_alignment.py.upstream
++++ portal/runner_snapshot/label_alignment.py
+@@ -23,7 +23,7 @@
+ import yaml
+ 
+ ROOT = Path(__file__).resolve().parent
+-PACKAGE = Path('/path/to/original-home/incoming/whichground_clean')
++PACKAGE = Path('/path/to/original-home/lx_workspace/semantic_map_gen/package')
+ READONLY_SAMPLE = Path('/path/to/original-home/incoming/robot_mapping_20261020_clean').resolve()
+ EXPECTED_MODEL_SHA = {
+     'H':'0084e75319a50ad85ef45377bad5bc38f2f58824459eb690048d51c9f8863be5',
+--- portal/backend.py.upstream
++++ portal/backend.py
+@@ -107,8 +107,8 @@
+             raise PortalError('上传和传回必须是两个独立根目录')
+         for p in (self.upload_root, self.result_root): p.mkdir(parents=True, exist_ok=True)
+         self.runner_root=Path(runner_root or ROOT/'runner_snapshot').resolve()
+-        self.package_root=Path(package_root or '/path/to/original-home/incoming/whichground_clean').resolve()
+-        self.default_calibration=Path(default_calibration or '/path/to/original-home/incoming/robot_mapping_20261020_clean/calibration/mapping_recording_calibration.txt').resolve()
++        self.package_root=Path(package_root or '/path/to/original-home/lx_workspace/semantic_map_gen/package').resolve()
++        self.default_calibration=Path(default_calibration or '/path/to/original-home/lx_workspace/semantic_map_gen/inputs/mapping_recording_calibration.txt').resolve()
+         self.python=self.package_root/'.venv-maps/bin/python'
+         self.max_upload_bytes=max_upload_bytes;self.free_reserve_bytes=free_reserve_bytes
+         self.lock=threading.RLock();self.stop=threading.Event();self.wake=threading.Event()
+--- portal/object_assist.py.upstream
++++ portal/object_assist.py
+@@ -6,7 +6,7 @@
+ import geometry_assist as ga
+ import scene as sm
+ _MODEL_LOCK=threading.Lock()
+-CHECKPOINT=Path('/path/to/original-home/incoming/whichground_clean/data/models/semantic_mapping/sam2/sam2.1_hiera_tiny.pt')
++CHECKPOINT=Path('/path/to/original-home/lx_workspace/semantic_map_gen/package/data/models/semantic_mapping/sam2/sam2.1_hiera_tiny.pt')
+ 
+ def points(value,width,height,name):
+  if not isinstance(value,list) or len(value)>10000:raise ValueError('Invalid '+name)
+--- portal/local_inputs.py.upstream
++++ portal/local_inputs.py
+@@ -1,7 +1,7 @@
+ """Explicit server-file selection; immutable input copies, not arbitrary downloads."""
+ from pathlib import Path
+ import os,shutil,uuid,tarfile
+-ROOT=Path(__file__).resolve().parents[2]/'输入数据'
++ROOT=Path(__file__).resolve().parents[1]/'inputs'
+ DEFAULTS={'home':str(Path.home()),'raw':str(ROOT/'rosbag'),'prepared':str(ROOT/'预处理')}
+ 
+ def browse(path=None,root='home',kind='raw'):

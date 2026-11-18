@@ -1,0 +1,103 @@
+diff --git a/agentic_robot/fsr_vln/memory/hmsg/dataloader/hm3dsem.py b/agentic_robot/fsr_vln/memory/hmsg/dataloader/hm3dsem.py
+index 07c387e..195cfa9 100644
+--- a/agentic_robot/fsr_vln/memory/hmsg/dataloader/hm3dsem.py
++++ b/agentic_robot/fsr_vln/memory/hmsg/dataloader/hm3dsem.py
+@@ -3,6 +3,8 @@
+ import sys
+ import os
+ import math
++import json
++from pathlib import Path
+ import numpy as np
+ from PIL import Image
+ import torchvision
+@@ -74,7 +76,6 @@ class HM3DSemDataset(RGBDDataset):
+         pose_data_list = []
+         rgb_data_list = os.listdir(self.root_dir + "/rgb")
+         rgb_data_list = [self.root_dir + "/rgb/" + x for x in rgb_data_list]
+-        self.frameId2imgPath = rgb_data_list
+         depth_data_list = os.listdir(self.root_dir + "/depth")
+         depth_data_list = [
+             self.root_dir +
+@@ -84,6 +85,7 @@ class HM3DSemDataset(RGBDDataset):
+         pose_data_list = [self.root_dir + "/pose/" + x for x in pose_data_list]
+         # sort the data list
+         rgb_data_list.sort()
++        self.frameId2imgPath = rgb_data_list
+         depth_data_list.sort()
+         pose_data_list.sort()
+         return list(zip(rgb_data_list, depth_data_list, pose_data_list))
+@@ -144,6 +146,14 @@ class HM3DSemDataset(RGBDDataset):
+         Returns:
+             Depth camera intrinsics as a numpy array (3x3 matrix).
+         """
++        intrinsic_path = Path(self.root_dir) / "intrinsics.json"
++        if intrinsic_path.exists():
++            payload = json.loads(intrinsic_path.read_text())
++            matrix = np.asarray(payload["K"], dtype=np.float64).copy()
++            matrix[0] *= W / float(payload["width"])
++            matrix[1] *= H / float(payload["height"])
++            matrix[2] = [0.0, 0.0, 1.0]
++            return matrix
+         hfov = 90 * np.pi / 180
+         vfov = 2 * math.atan(np.tan(hfov / 2) * H / W)
+         fx = W / (2.0 * np.tan(hfov / 2.0))
+diff --git a/agentic_robot/fsr_vln/memory/hmsg/graph/graph.py b/agentic_robot/fsr_vln/memory/hmsg/graph/graph.py
+index 13b316b..09ac9d9 100644
+--- a/agentic_robot/fsr_vln/memory/hmsg/graph/graph.py
++++ b/agentic_robot/fsr_vln/memory/hmsg/graph/graph.py
+@@ -1010,7 +1010,7 @@ class Graph:
+                 retarget_img_id = img_id * self.cfg.pipeline.skip_frames
+                 img_path = self.dataset.frameId2imgPath[retarget_img_id]
+                 view = View(str(floor.floor_id) + "_" + str(room_id) +
+-                            "_" + str(view_index), room_id, retarget_img_id)
++                            "_" + str(view_index), floor.rooms[room_id].room_id, retarget_img_id)
+                 view.img_path = img_path
+                 # view.embedding = room_clip_embeddings_list[room_id][i]
+                 self.views.append(view)
+@@ -1956,7 +1956,8 @@ class Graph:
+                 upperbound = self.floors[floor_id + 1].floor_zero_level
+             # import pdb; pdb.set_trace()
+             floor_poses_list = nav_graph.get_floor_poses(
+-                floor, poses_list, upperbound)
++                floor, poses_list, upperbound,
++                camera_height=float(self.cfg.pipeline.get("camera_height", 0.8)))
+             # import pdb; pdb.set_trace()
+             sparse_stairs_voronoi = nav_graph.get_stairs_graph_with_poses_v2(
+                 floor, floor_id, poses_list, nav_dir
+diff --git a/agentic_robot/fsr_vln/memory/hmsg/graph/navigation_graph.py b/agentic_robot/fsr_vln/memory/hmsg/graph/navigation_graph.py
+index 84d3205..e35a56d 100644
+--- a/agentic_robot/fsr_vln/memory/hmsg/graph/navigation_graph.py
++++ b/agentic_robot/fsr_vln/memory/hmsg/graph/navigation_graph.py
+@@ -345,6 +345,12 @@ class NavigationGraph:
+         Returns:
+             pose_map (np.ndarray): The resulting pose region grid map. 1 is the pose region, 0 is the non-pose region.
+         """
++        if poses_list is None or len(poses_list) == 0:
++            # Unobserved floors contribute no trajectory-derived free space.
++            poses_map = np.zeros(self.grid_size[::-1], dtype=np.uint8)
++            if save:
++                cv2.imwrite(os.path.join(floor_dir, "poses_region_map.png"), poses_map)
++            return poses_map
+         pose_heights = np.array([pose[1, 3] for pose in poses_list])
+         clusters = DBSCAN(eps=0.1).fit(pose_heights.reshape(-1, 1))
+         labels, counts = np.unique(clusters.labels_, return_counts=True)
+diff --git a/agentic_robot/fsr_vln/ovo/integration/hmsg_bridge.py b/agentic_robot/fsr_vln/ovo/integration/hmsg_bridge.py
+index 6640b93..3b9f26a 100644
+--- a/agentic_robot/fsr_vln/ovo/integration/hmsg_bridge.py
++++ b/agentic_robot/fsr_vln/ovo/integration/hmsg_bridge.py
+@@ -204,7 +204,13 @@ def build_hmsg_from_ovo_output(
+         # filter point cloud
+     full_pcd = full_pcd.voxel_down_sample(voxel_size=cfg.pipeline.voxel_size)
+     print("Original full_pcd has {} points".format(len(full_pcd.points)))
+-    full_pcd = pcd_denoise_dbscan(full_pcd, eps=0.01, min_points=100)
++    # Keep DBSCAN connectivity compatible with the map voxel spacing.
++    # With 5 cm voxels, the previous fixed 1 cm radius isolated every point.
++    full_pcd = pcd_denoise_dbscan(
++        full_pcd,
++        eps=float(cfg.pipeline.get("full_pcd_dbscan_eps", max(0.15, 3 * cfg.pipeline.voxel_size))),
++        min_points=int(cfg.pipeline.get("full_pcd_dbscan_min_points", 20)),
++    )
+     print("After denoising, full_pcd has {} points".format(len(full_pcd.points)))
+     _, inlier_idx = full_pcd.remove_radius_outlier(nb_points=1000, radius=1.0)
+     inlier_cloud = full_pcd.select_by_index(inlier_idx)

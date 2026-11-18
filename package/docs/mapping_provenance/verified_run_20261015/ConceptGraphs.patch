@@ -1,0 +1,87 @@
+diff --git a/conceptgraph/scripts/streamlined_detections.py b/conceptgraph/scripts/streamlined_detections.py
+index b34313c..c13b4d7 100644
+--- a/conceptgraph/scripts/streamlined_detections.py
++++ b/conceptgraph/scripts/streamlined_detections.py
+@@ -2,7 +2,6 @@
+ import gzip
+ from pathlib import Path
+ import pickle
+-from conceptgraph.scripts.generate_gsa_results import get_sam_predictor
+ import cv2
+ import hydra
+ from line_profiler import profile
+@@ -39,6 +38,7 @@ def main(cfg: DictConfig):
+         desired_width=cfg.desired_width,
+         device="cpu",
+         dtype=torch.float,
++        relative_pose=cfg.get("relative_pose", True),
+     )
+ 
+     # Initialize the model(s)
+@@ -84,6 +84,16 @@ def main(cfg: DictConfig):
+         detection_class_ids = results[0].boxes.cls.cpu().numpy().astype(int)
+         xyxy_tensor = results[0].boxes.xyxy
+         xyxy_np = xyxy_tensor.cpu().numpy()
++
++        if len(confidences) == 0:
++            empty = {"xyxy": np.zeros((0, 4)), "confidence": np.zeros(0),
++                     "class_id": np.zeros(0, dtype=int), "mask": np.zeros((0, *image.shape[:2]), dtype=bool),
++                     "classes": classes, "image_crops": [],
++                     "image_feats": np.zeros((0, 1024)), "text_feats": np.zeros((0, 1024))}
++            cv2.imwrite(vis_save_path, image)
++            with gzip.open(detections_folder_path / (Path(vis_save_path).stem + ".pkl.gz"), "wb") as handle:
++                pickle.dump(empty, handle)
++            continue
+         
+         # Get Masks Using SAM or MobileSAM
+         # UltraLytics SAM
+@@ -140,4 +150,4 @@ def main(cfg: DictConfig):
+         
+ 
+ if __name__ == "__main__":
+-    measure_time(main)()
+\ No newline at end of file
++    measure_time(main)()
+diff --git a/conceptgraph/slam/streamlined_mapping.py b/conceptgraph/slam/streamlined_mapping.py
+index ec8cb37..78ab5c5 100644
+--- a/conceptgraph/slam/streamlined_mapping.py
++++ b/conceptgraph/slam/streamlined_mapping.py
+@@ -132,6 +132,7 @@ def main(cfg : DictConfig):
+         desired_width=cfg.image_width,
+         device="cpu",
+         dtype=torch.float,
++        relative_pose=cfg.get("relative_pose", True),
+     )
+     # cam_K = dataset.get_cam_K()
+     
+@@ -434,4 +435,4 @@ def main(cfg : DictConfig):
+         print("Save video to %s" % video_save_path)
+         
+ if __name__ == "__main__":
+-    main()
+\ No newline at end of file
++    main()
+diff --git a/conceptgraph/utils/ious.py b/conceptgraph/utils/ious.py
+index d375352..400932f 100644
+--- a/conceptgraph/utils/ious.py
++++ b/conceptgraph/utils/ious.py
+@@ -167,7 +167,11 @@ def compute_3d_iou_accuracte_batch(bbox1, bbox2):
+     bbox1 = bbox1[:, [0, 2, 5, 3, 1, 7, 4, 6]]
+     bbox2 = bbox2[:, [0, 2, 5, 3, 1, 7, 4, 6]]
+     
+-    inter_vol, iou = ops.box3d_overlap(bbox1.float(), bbox2.float())
++    # The exact box overlap is non-differentiable and small compared with image
++    # inference. Use the CPU extension so it also works without a CUDA toolkit.
++    output_device = bbox1.device
++    inter_vol, iou = ops.box3d_overlap(bbox1.float().cpu(), bbox2.float().cpu())
++    inter_vol, iou = inter_vol.to(output_device), iou.to(output_device)
+     
+     return iou
+ 
+@@ -493,4 +497,4 @@ def mask_subtract_contained(xyxy: np.ndarray, mask: np.ndarray, th1=0.8, th2=0.7
+     for i in range(len(contained_idx[0])):
+         mask_sub[contained_idx[0][i]] = mask_sub[contained_idx[0][i]] & (~mask_sub[contained_idx[1][i]])
+ 
+-    return mask_sub
+\ No newline at end of file
++    return mask_sub

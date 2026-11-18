@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+/cache/
+/runs/
+/package/.venv-maps/
+/package/.venv-da3/
+/package/data/
+/build/
+/dist/
+*.egg-info/

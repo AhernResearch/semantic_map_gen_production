@@ -1,0 +1,54 @@
+diff --git a/vlmaps/map/vlmap_builder_cam.py b/vlmaps/map/vlmap_builder_cam.py
+index f6cfaa8..d125b03 100644
+--- a/vlmaps/map/vlmap_builder_cam.py
++++ b/vlmaps/map/vlmap_builder_cam.py
+@@ -135,10 +135,13 @@ class VLMapBuilderCam:
+             pix_feats = get_lseg_feat(
+                 lseg_model, rgb, ["example"], lseg_transform, self.device, crop_size, base_size, norm_mean, norm_std
+             )
+-            pix_feats_intr = get_sim_cam_mat(pix_feats.shape[2], pix_feats.shape[3])
++            # Features cover the resized input image; retain its real camera K.
++            pix_feats_intr = calib_mat.copy()
++            pix_feats_intr[0] *= pix_feats.shape[3] / rgb.shape[1]
++            pix_feats_intr[1] *= pix_feats.shape[2] / rgb.shape[0]
+ 
+             # backproject depth point cloud
+-            pc = self._backproject_depth(depth, calib_mat, depth_sample_rate, min_depth=0.1, max_depth=100)
++            pc = self._backproject_depth(depth, calib_mat, depth_sample_rate, min_depth=0.1, max_depth=10)
+ 
+             # transform the point cloud to global frame (init base frame)
+             transform_tf = camera_pose_tf  # @ self.habitat2cam_rot_tf
+@@ -148,10 +151,12 @@ class VLMapBuilderCam:
+                 row, height, col = np.round(((p - self.pcd_min) / cs)).astype(int)
+ 
+                 px, py, pz = project_point(calib_mat, p_local)
++                if px < 0 or py < 0 or px >= rgb.shape[1] or py >= rgb.shape[0]:
++                    continue
+                 rgb_v = rgb[py, px, :]
+                 px, py, pz = project_point(pix_feats_intr, p_local)
+-                if row >= height_map.shape[0] or col >= height_map.shape[1] or row < 0 or col < 0:
+-                    print("out of range")
++                if (row >= occupied_ids.shape[0] or height >= occupied_ids.shape[1]
++                        or col >= occupied_ids.shape[2] or min(row, height, col) < 0):
+                     continue
+ 
+                 if height > height_map[row, col]:
+@@ -169,7 +174,7 @@ class VLMapBuilderCam:
+                 # ConceptFusion https://arxiv.org/pdf/2302.07241.pdf Sec. 4.1, Feature fusion
+                 radial_dist_sq = np.sum(np.square(p_local))
+                 sigma_sq = 0.6
+-                alpha = np.exp(-radial_dist_sq / (2 * sigma_sq))
++                alpha = max(1e-8, float(np.exp(-radial_dist_sq / (2 * sigma_sq))))
+ 
+                 # update map features
+                 if not (px < 0 or py < 0 or px >= pix_feats.shape[3] or py >= pix_feats.shape[2]):
+@@ -177,7 +182,8 @@ class VLMapBuilderCam:
+                     occupied_id = occupied_ids[row, height, col]
+                     if occupied_id == -1:
+                         occupied_ids[row, height, col] = max_id
+-                        grid_feat[max_id] = feat.flatten() * alpha
++                        # Store the mean, with its weight separately, as on updates.
++                        grid_feat[max_id] = feat.flatten()
+                         grid_rgb[max_id] = rgb_v
+                         weight[max_id] += alpha
+                         grid_pos[max_id] = [row, height, col]

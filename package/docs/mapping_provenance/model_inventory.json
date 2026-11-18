@@ -1,0 +1,26 @@
+[
+  {
+    "path": "data/models/semantic_mapping/lseg/demo_e200.ckpt",
+    "bytes": 3095944292,
+    "sha256": "f21aeb5532f53a5109d453d7d0d10320701ea11ece9a002291f84f95bda73af4",
+    "url": "https://drive.google.com/uc?id=1ayk6NXURI_vIPlym16f_RG3ffxBWHxvb"
+  },
+  {
+    "path": "data/models/semantic_mapping/sam2/sam2.1_hiera_tiny.pt",
+    "bytes": 156008466,
+    "sha256": "7402e0d864fa82708a20fbd15bc84245c2f26dff0eb43a4b5b93452deb34be69",
+    "url": "https://dl.fbaipublicfiles.com/segment_anything_2/092824/sam2.1_hiera_tiny.pt"
+  },
+  {
+    "path": "data/models/semantic_mapping/conceptgraphs/yolov8l-world.pt",
+    "bytes": 95667042,
+    "sha256": "8bdfaef999116760247d6fb0b0f8fca064b43e94598b3d4a807ebae9bcf0cdd5",
+    "url": "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8l-world.pt"
+  },
+  {
+    "path": "data/models/semantic_mapping/conceptgraphs/mobile_sam.pt",
+    "bytes": 40728226,
+    "sha256": "6dbb90523a35330fedd7f1d3dfc66f995213d81b29a5ca8108dbcdd4e37d6c2f",
+    "url": "https://github.com/ultralytics/assets/releases/download/v8.3.0/mobile_sam.pt"
+  }
+]
